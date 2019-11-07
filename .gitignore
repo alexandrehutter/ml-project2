@@ -107,5 +107,5 @@ ENV/
 *.synctex.gz
 *.tex
 
-# Data
-Datasets/
+# Data (currently not necesssary)
+# Datasets/

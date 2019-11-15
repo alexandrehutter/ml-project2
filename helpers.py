@@ -1,14 +1,64 @@
 import matplotlib.image as mpimg
 import numpy as np
+import os,sys
+
+
+### Data extraction ###
+
+
+def load_training_images(n):
+    """Loads n training images and the corresponding groundtruth. 
+    Returns two lists, (imgs, gt_imgs), where the first contains training images 
+    and the second contains groundtruth images."""
+    
+    root_dir = "Datasets/training/"
+    image_dir = root_dir + "images/"
+    gt_dir = root_dir + "groundtruth/"
+    
+    files = os.listdir(image_dir)
+    n = min(n, len(files))
+    imgs = [load_image(image_dir + files[i]) for i in range(n)]
+    gt_imgs = [load_image(gt_dir + files[i]) for i in range(n)]
+    return imgs, gt_imgs
+
+
+def load_image(path):
+    """Returns an image, given its file path."""
+    img = mpimg.imread(path)
+    return img
+
+
+def get_patches(imgs, patch_size):
+    """Extracts patches from a list of images."""
+    img_patches = [img_crop(img, patch_size, patch_size) for img in imgs]
+    # Linearize list of patches
+    img_patches = np.asarray([img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))])
+    return img_patches
+
+
+def get_data_from_patches(img_patches, gt_patches, foreground_threshold, extract_func):
+    """Constructs X and Y arrays from image and groundtruth patches lists."""
+    
+    def value_to_class(v):
+        df = np.sum(v)
+        if df > foreground_threshold:
+            return 1
+        else:
+            return 0
+
+    X = np.asarray([ extract_func(img_patches[i]) for i in range(len(img_patches))])
+    Y = np.asarray([value_to_class(np.mean(gt_patches[i])) for i in range(len(gt_patches))])
+    return X, Y
+
+
+def get_data_from_img(img, extract_func, patch_size):
+    """Constructs the X array of a single image, by splitting it into patches."""
+    img_patches = img_crop(img, patch_size, patch_size)
+    X = np.asarray([ extract_func(img_patches[i]) for i in range(len(img_patches))])
+    return X
 
 
 ### Image manipulation ###
-
-
-def load_image(infilename):
-    """Returns an image, given its file path."""
-    data = mpimg.imread(infilename)
-    return data
 
 
 def img_float_to_uint8(img):
@@ -67,14 +117,6 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
 ### Feature extraction ###
 
 
-def extract_patches(imgs, patch_size=16):
-    """Extracts patches from input images."""
-    img_patches = [img_crop(img, patch_size, patch_size) for img in imgs]
-    # Linearize list of patches
-    img_patches = np.asarray([img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))])
-    return img_patches
-
-
 def extract_features_6d(img):
     """Extracts a 6-dimensional feature consisting of the average and variance of each RGB channel."""
     feat_m = np.mean(img, axis=(0,1))
@@ -91,13 +133,41 @@ def extract_features_2d(img):
     return feat
 
 
-def extract_img_features(filename, patch_size=16, f=extract_features_2d):
-    """Extracts all the features of an image, by splitting it in patches.
-    filename: the path to the image.
-    patch_size: the side length of a patch (optional).
-    f: The feature extraction function (optional).
-    Returns a numpy array of features."""
-    img = load_image(filename)
-    img_patches = img_crop(img, patch_size, patch_size)
-    X = np.asarray([ f(img_patches[i]) for i in range(len(img_patches))])
-    return X
+### Predictions analysis ###
+
+
+def true_positive_rate(Z, Y):
+    """Returns the true positive rate, given a set of predictions Z and the true labels Y."""
+    # Get non-zeros in prediction and grountruth arrays
+    Zn = np.nonzero(Z)[0]
+    Yn = np.nonzero(Y)[0]
+    TPR = len(list(set(Yn) & set(Zn))) / float(len(Z))
+    return TPR
+
+
+### Submission ###
+
+
+def create_submission(model, extraction_func, patch_size):
+    """Loads test images, runs predictions on them and creates a submission file."""
+    
+    dir_t = "Datasets/test_set_images/"
+    n_t = 50  # Number of test images
+
+    with open('Datasets/submission.csv', 'w') as f:
+        f.write('id,prediction\n')
+
+        for img_idx in range(1, n_t+1):
+            img_path = dir_t + "test_{0}/test_{0}.png".format(img_idx)
+            img = load_image(img_path)
+
+            # Run predictions
+            Xi_t = get_data_from_img(img, extraction_func, patch_size)
+            Zi_t = model.predict(Xi_t)
+
+            # Write predictions to file
+            pred_index = 0
+            for j in range(0, img.shape[1], patch_size):
+                for i in range(0, img.shape[0], patch_size):
+                    f.write("{:03d}_{}_{},{}\n".format(img_idx, j, i, Zi_t[pred_index]))
+                    pred_index += 1

@@ -6,7 +6,13 @@ from PIL import Image
 from helpers import img_float_to_uint8, concatenate_images
 
 
-def show_img_overlay(img, predicted_img):
+def show_img(img, size=5):
+    """Shows an image."""
+    fig1 = plt.figure(figsize=(size, size))
+    plt.imshow(img, cmap='Greys_r')
+
+
+def show_img_overlay(img, predicted_img, size=10):
     """Shows predictions with a red overlay on top of the base image."""
     w = img.shape[0]
     h = img.shape[1]
@@ -17,15 +23,13 @@ def show_img_overlay(img, predicted_img):
     background = Image.fromarray(img8, 'RGB').convert("RGBA")
     overlay = Image.fromarray(color_mask, 'RGB').convert("RGBA")
     new_img = Image.blend(background, overlay, 0.2)
-    fig1 = plt.figure(figsize=(10, 10))
-    plt.imshow(new_img)
+    show_img(new_img, size=size)
 
 
-def show_img_concatenated(img, img2):
+def show_img_concatenated(img, img2, size=10):
     """Shows two concatenated images (e.g. a base image along with its groundtruth or predictions)."""
     cimg = concatenate_images(img, img2)
-    fig1 = plt.figure(figsize=(10, 10))
-    plt.imshow(cimg, cmap='Greys_r')
+    show_img(cimg, size=size)
 
 
 def show_data_points(X, Y):

@@ -138,11 +138,45 @@ def extract_features_2d(img):
 
 def true_positive_rate(Z, Y):
     """Returns the true positive rate, given a set of predictions Z and the true labels Y."""
-    # Get non-zeros in prediction and grountruth arrays
-    Zn = np.nonzero(Z)[0]
-    Yn = np.nonzero(Y)[0]
+    Zn = np.where(Z == 1)[0]
+    Yn = np.where(Y == 1)[0]
     TPR = len(list(set(Yn) & set(Zn))) / float(len(Z))
     return TPR
+
+
+def true_negative_rate(Z, Y):
+    """Returns the true negative rate, given a set of predictions Z and the true labels Y."""
+    Zn = np.where(Z == 0)[0]
+    Yn = np.where(Y == 0)[0]
+    TNR = len(list(set(Yn) & set(Zn))) / float(len(Z))
+    return TNR
+
+
+def false_negative_rate(Z, Y):
+    """Returns the false negative rate, given a set of predictions Z and the true labels Y."""
+    Zn = np.where(Z == 0)[0]
+    Yn = np.where(Y == 1)[0]
+    FNR = len(list(set(Yn) & set(Zn))) / float(len(Z))
+    return FNR
+
+
+def false_positive_rate(Z, Y):
+    """Returns the false positive rate, given a set of predictions Z and the true labels Y."""
+    Zn = np.where(Z == 1)[0]
+    Yn = np.where(Y == 0)[0]
+    FPR = len(list(set(Yn) & set(Zn))) / float(len(Z))
+    return FPR
+
+
+def f_score(Z, Y, beta=1):
+    """Returns the F-score, given a set of predictions Z and the true labels Y.
+    
+    beta: the emphasis given to false negatives (recall). Default is the F1-score.
+    """
+    fb_num = (1 + beta**2) * true_positive_rate(Z, Y)
+    fb_den = fb_num + beta**2 * false_negative_rate(Z, Y) + false_positive_rate(Z, Y)
+    fb = fb_num / fb_den
+    return fb
 
 
 ### Submission ###

@@ -182,7 +182,7 @@ def f_score(Z, Y, beta=1):
 ### Submission ###
 
 
-def create_submission(model, extraction_func, patch_size):
+def create_submission(model, extraction_func, patch_size, preproc):
     """Loads test images, runs predictions on them and creates a submission file."""
     
     dir_t = "Datasets/test_set_images/"
@@ -197,6 +197,8 @@ def create_submission(model, extraction_func, patch_size):
 
             # Run predictions
             Xi_t = get_data_from_img(img, extraction_func, patch_size)
+            if preproc is not None:
+                Xi_t = preproc.transform(Xi_t)
             Zi_t = model.predict(Xi_t)
 
             # Write predictions to file

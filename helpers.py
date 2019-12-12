@@ -36,9 +36,14 @@ def get_patches(imgs, patch_size):
     return img_patches
 
 
-def get_data_from_patches(img_patches, gt_patches, foreground_threshold, extract_func):
-    """Constructs X and Y arrays from image and groundtruth patches lists."""
-    
+def get_features_from_patches(img_patches, extract_func):
+    """Constructs X array from image patches lists."""
+    X = np.asarray([ extract_func(img_patches[i]) for i in range(len(img_patches))])
+    return X
+
+
+def get_labels_from_patches(gt_patches, foreground_threshold):
+    """Constructs Y array from image patches lists."""
     def value_to_class(v):
         df = np.sum(v)
         if df > foreground_threshold:
@@ -46,15 +51,14 @@ def get_data_from_patches(img_patches, gt_patches, foreground_threshold, extract
         else:
             return 0
 
-    X = np.asarray([ extract_func(img_patches[i]) for i in range(len(img_patches))])
     Y = np.asarray([value_to_class(np.mean(gt_patches[i])) for i in range(len(gt_patches))])
-    return X, Y
+    return Y
 
 
-def get_data_from_img(img, extract_func, patch_size):
+def get_features_from_img(img, extract_func, patch_size):
     """Constructs the X array of a single image, by splitting it into patches."""
     img_patches = img_crop(img, patch_size, patch_size)
-    X = np.asarray([ extract_func(img_patches[i]) for i in range(len(img_patches))])
+    X = get_features_from_patches(img_patches, extract_func)
     return X
 
 
@@ -196,7 +200,7 @@ def create_submission(model, extraction_func, patch_size, preproc):
             img = load_image(img_path)
 
             # Run predictions
-            Xi_t = get_data_from_img(img, extraction_func, patch_size)
+            Xi_t = get_x_from_img(img, extraction_func, patch_size)
             if preproc is not None:
                 Xi_t = preproc.transform(Xi_t)
             Zi_t = model.predict(Xi_t)

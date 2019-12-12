@@ -62,6 +62,13 @@ def get_features_from_img(img, extract_func, patch_size):
     return X
 
 
+def get_labels_from_img(gt_img, foreground_threshold, patch_size):
+    """Constructs Y array from image patches lists."""
+    gt_patches = img_crop(gt_img, patch_size, patch_size)
+    Y = get_labels_from_patches(gt_patches, foreground_threshold)
+    return Y
+
+
 ### Image manipulation ###
 
 
@@ -200,7 +207,7 @@ def create_submission(model, extraction_func, patch_size, preproc):
             img = load_image(img_path)
 
             # Run predictions
-            Xi_t = get_x_from_img(img, extraction_func, patch_size)
+            Xi_t = get_features_from_img(img, extraction_func, patch_size)
             if preproc is not None:
                 Xi_t = preproc.transform(Xi_t)
             Zi_t = model.predict(Xi_t)

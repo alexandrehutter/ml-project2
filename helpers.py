@@ -2,6 +2,8 @@ import matplotlib.image as mpimg
 import numpy as np
 import os,sys
 
+import postprocessing
+
 
 ### Data extraction ###
 
@@ -144,6 +146,16 @@ def extract_features_2d(img):
     return feat
 
 
+def extract_features_12d(img):
+    """Extracts a 12-dimensional feature consisting of the average, max, min, and variance of each RGB channel."""
+    feat_m = np.mean(img, axis=(0,1))
+    feat_min = np.min(img, axis=(0,1))
+    feat_max = np.max(img, axis=(0,1))
+    feat_v = np.var(img, axis=(0,1))
+    feat = np.append(feat_m, [feat_v, feat_min, feat_max])
+    return feat
+
+
 ### Predictions analysis ###
 
 
@@ -193,11 +205,12 @@ def f_score(Z, Y, beta=1):
 ### Submission ###
 
 
-def create_submission(model, extraction_func, patch_size, preproc):
+def create_submission(model, extraction_func, patch_size, preproc, aggregate_threshold):
     """Loads test images, runs predictions on them and creates a submission file."""
     
     dir_t = "Datasets/test_set_images/"
     n_t = 50  # Number of test images
+    output_patch_size = 16  # The patch size expected by AICrowd
 
     with open('Datasets/submission.csv', 'w') as f:
         f.write('id,prediction\n')
@@ -211,10 +224,12 @@ def create_submission(model, extraction_func, patch_size, preproc):
             if preproc is not None:
                 Xi_t = preproc.transform(Xi_t)
             Zi_t = model.predict(Xi_t)
+            if patch_size != output_patch_size:
+                Zi_t = postprocessing.aggregate_labels(Zi_t, patch_size, output_patch_size, aggregate_threshold)
 
             # Write predictions to file
             pred_index = 0
-            for j in range(0, img.shape[1], patch_size):
-                for i in range(0, img.shape[0], patch_size):
+            for j in range(0, img.shape[1], output_patch_size):
+                for i in range(0, img.shape[0], output_patch_size):
                     f.write("{:03d}_{}_{},{}\n".format(img_idx, j, i, Zi_t[pred_index]))
                     pred_index += 1

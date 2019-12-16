@@ -224,6 +224,10 @@ def create_submission(model, extraction_func, patch_size, preproc, aggregate_thr
             if preproc is not None:
                 Xi_t = preproc.transform(Xi_t)
             Zi_t = model.predict(Xi_t)
+            
+            # Map to 0 and 1 for neural net
+            Zi_t = [1 if t >= 0.45 else 0 for t in Zi_t]
+            
             if patch_size != output_patch_size:
                 Zi_t = postprocessing.aggregate_labels(Zi_t, patch_size, output_patch_size, aggregate_threshold)
 

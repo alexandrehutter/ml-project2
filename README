@@ -1,0 +1,19 @@
+This our project about road segmentation, here are the several instructions you need to be able to run the program:
+
+1. first install the different libraries: -numpy
+                                       -scikit-Learn
+                                       -scikit-Image
+                                       -tensorflow
+                                       -keras
+                                       
+2. then just run: python run.py
+
+3.it will output a submission.csv in the Datasets folder.
+
+
+The Datasets folder contains two subfolders test_set_images and training respectively containing the images to run predictions on
+and the images to train the system on.
+
+As a special note if you want to change for a KNN instead of the neural network we use, just uncomment in run.py the line 75 (model = knn(X,Y,seed))
+and comment the line 76 (model = neural_net(X, Y)), but the KNN gives less good results.
+

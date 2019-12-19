@@ -1,6 +1,6 @@
 This is our project about road segmentation, here are the several instructions you need to follow to be able to run the program run.py :
 
-1. first install the different libraries: 
+1. First install the different libraries: 
 
 	- numpy
 	- scikit-learn

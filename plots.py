@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os,sys
 from PIL import Image
-from helpers import *
+import helpers
 
 
 def show_img(img, size=5):
@@ -19,16 +19,17 @@ def show_img_overlay(img, predicted_img, size=10):
     color_mask = np.zeros((w, h, 3), dtype=np.uint8)
     color_mask[:,:,0] = predicted_img*255
 
-    img8 = img_float_to_uint8(img)
+    img8 = helpers.img_float_to_uint8(img)
     background = Image.fromarray(img8, 'RGB').convert("RGBA")
     overlay = Image.fromarray(color_mask, 'RGB').convert("RGBA")
     new_img = Image.blend(background, overlay, 0.2)
+    new_img.save("img.png")
     show_img(new_img, size=size)
 
 
 def show_img_concatenated(img, img2, size=10):
     """Shows two concatenated images (e.g. a base image along with its groundtruth or predictions)."""
-    cimg = concatenate_images(img, img2)
+    cimg = helpers.concatenate_images(img, img2)
     show_img(cimg, size=size)
 
 

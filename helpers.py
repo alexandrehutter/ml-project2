@@ -289,6 +289,8 @@ def create_submission(model, extraction_func, patch_size, preproc, aggregate_thr
             
             Zi_t = postprocessing.threshold_labels(Zi_t, aggregate_threshold)
             
+            Zi_t = postprocessing.road_filters(Zi_t)
+            
             # Write predictions to file
             pred_index = 0
             for j in range(0, img.shape[1], output_patch_size):

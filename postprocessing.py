@@ -1,8 +1,10 @@
 import numpy as np
+from helpers import *
 
 from skimage.transform import hough_line, hough_line_peaks
 from skimage.feature import canny
 from skimage import data
+from skimage import morphology
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -76,7 +78,7 @@ def hough_transform(predicted_img):
     plt.tight_layout()
     plt.show()
     
-    
+
 def clean_labels(img, patch_size):
     """Tries to remove little noise and removes some holes in the lines
     and removes big patches of white like parkings"""
@@ -103,3 +105,16 @@ def clean_labels(img, patch_size):
 def threshold_labels(Zi, threshold):
     return [1 if t >= threshold else 0 for t in Zi]
 
+def road_filters(Zi):
+    side = int(np.sqrt(len(Zi)))
+    init = label_to_img(side, side, 1, 1, Zi)
+    closing = morphology.binary_closing(init, selem=morphology.square(2))
+    tophat = morphology.white_tophat(closing, selem=morphology.square(6))
+    opening = morphology.opening(tophat, selem=morphology.rectangle(5,1))
+    opening_h = morphology.opening(tophat, selem=morphology.rectangle(1,5))
+    closing2 = morphology.closing(opening, selem=morphology.rectangle(5,1))
+    closing2_h = morphology.closing(opening_h, selem=morphology.rectangle(1,5))
+    lab1 = get_labels_from_img(closing2, 0.5, 1)
+    lab2 = get_labels_from_img(closing2_h, 0.5, 1)
+    lab = [l or lab2[i] for i,l in enumerate(lab1)]
+    return lab

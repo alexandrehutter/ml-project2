@@ -179,6 +179,39 @@ def extract_features_12d(img):
     return feat
 
 
+def augment_features_6d_with_adjacent(X, side_px, patch_size, n_images):
+    """Extends an array of 6D features to include the mean of the mean of adjacent patches, for each channel.
+    
+    This function assumes an ordered sequence of square images of the same size.
+    X: the features array.
+    side_px: side number of pixels of the images.
+    patch_size: side number of pixels in a patch.
+    n_images: the number of images.
+    Returns a features array with D=9.
+    """
+    if side_px % patch_size != 0:
+        raise ValueError("Invalid size")
+    side_patches = int(side_px / patch_size)
+    patches_per_image = side_patches * side_patches
+    vec = []
+    for n in range(n_images):
+        for i in range(patches_per_image):
+            # Compute the mean of the three channels, for each adjacent patch
+            means = []
+            if i % side_patches != 0:
+                means.append(X[i - 1, :3])
+            if (i + 1) % side_patches != 0:
+                means.append(X[i + 1, :3])
+            if i >= side_patches:
+                means.append(X[i - side_patches, :3])
+            if (patches_per_image - 1 - i) >= side_patches:
+                means.append(X[i + side_patches, :3])
+            m = np.mean(np.array(means), axis=0)
+            vec.append(m)
+    X = np.hstack((X, np.array(vec).reshape(-1,3)))
+    return X
+
+
 ### Predictions analysis ###
 
 
@@ -247,6 +280,10 @@ def create_submission(model, extraction_func, patch_size, preproc, aggregate_thr
             if preproc is not None:
                 Xi_t = preproc.transform(Xi_t)
             Zi_t = model.predict(Xi_t)
+            
+            # Map to 0 and 1 for neural net
+            Zi_t = [1 if t >= 0.45 else 0 for t in Zi_t]
+            
             if patch_size != output_patch_size:
                 Zi_t = postprocessing.aggregate_labels(Zi_t, patch_size, output_patch_size, aggregate_threshold)
             

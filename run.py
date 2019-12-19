@@ -21,12 +21,16 @@ from skimage.filters import gaussian
 # Initialize parameters :
 ###########################################
 
+# Number of training images
+n = 100
+
 seed = 0
 
 tf.random.set_seed(seed)
 
 patch_size = 16
 aggregate_threshold = 0.3
+foreground_threshold = 0.25
 
 # Extraction function
 extraction_func = extract_features_6d

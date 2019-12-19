@@ -6,8 +6,6 @@ import math
 from skimage.morphology import  opening, closing, white_tophat
 from skimage.morphology import square
 
-import cv2 as cv
-
 import postprocessing
 from plots import *
 

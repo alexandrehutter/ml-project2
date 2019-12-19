@@ -1,8 +1,17 @@
 import matplotlib.image as mpimg
 import numpy as np
 import os,sys
+import math
+
+from skimage.morphology import  opening, closing, white_tophat
+from skimage.morphology import square
+
+import cv2 as cv
 
 import postprocessing
+from plots import *
+
+from skimage.filters import gaussian
 
 
 ### Data extraction ###
@@ -126,6 +135,20 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
             idx = idx + 1
     return im
 
+def img_to_label(img, patch_size, Zi):
+    """Transforms an image into a linear array of 0 and 1 values"""
+    
+    height = img.shape[0]/patch_size
+    width = img.shape[1]/patch_size
+    labels = np.zeros(len(Zi), dtype=np.int8)
+    
+    for i in range(int(height*width)):
+        labels[i] = img[math.floor((i*16)/img.shape[1])][(i*16) % img.shape[1]]
+    return labels
+
+        
+
+
 
 ### Feature extraction ###
 
@@ -218,7 +241,7 @@ def create_submission(model, extraction_func, patch_size, preproc, aggregate_thr
         for img_idx in range(1, n_t+1):
             img_path = dir_t + "test_{0}/test_{0}.png".format(img_idx)
             img = load_image(img_path)
-
+            img = gaussian(img, sigma = 2, multichannel = True)
             # Run predictions
             Xi_t = get_features_from_img(img, extraction_func, patch_size)
             if preproc is not None:
@@ -226,7 +249,16 @@ def create_submission(model, extraction_func, patch_size, preproc, aggregate_thr
             Zi_t = model.predict(Xi_t)
             if patch_size != output_patch_size:
                 Zi_t = postprocessing.aggregate_labels(Zi_t, patch_size, output_patch_size, aggregate_threshold)
-
+            
+            Zi_t = postprocessing.threshold_labels(Zi_t, aggregate_threshold)
+            
+            #predicted_img = label_to_img(img.shape[0], img.shape[1], output_patch_size, output_patch_size, Zi_t)
+            
+            #predicted_img = postprocessing.clean_labels(predicted_img, output_patch_size)
+            
+            #Zi_t = img_to_label(predicted_img, output_patch_size, Zi_t)
+            
+            
             # Write predictions to file
             pred_index = 0
             for j in range(0, img.shape[1], output_patch_size):

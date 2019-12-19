@@ -75,3 +75,31 @@ def hough_transform(predicted_img):
 
     plt.tight_layout()
     plt.show()
+    
+    
+def clean_labels(img, patch_size):
+    """Tries to remove little noise and removes some holes in the lines
+    and removes big patches of white like parkings"""
+    kernel1 = square(3*patch_size)
+    kernel2 = square(9*patch_size)
+    kernel3 = np.ones((4*patch_size,1))
+    kernel4 = np.ones((1,4*patch_size))
+
+    predicted_img = closing(img, kernel1)
+    predicted_img = white_tophat(predicted_img, kernel2)
+    predicted_img_vert = opening(predicted_img, kernel3)
+
+    predicted_img_hor = opening(predicted_img, kernel4)
+
+    predict_img_final = cv.addWeighted(predicted_img_vert,1,predicted_img_hor,1,0.0)
+
+    for x in range(len(predict_img_final)):
+        for y in range(len(predict_img_final)):
+            if predict_img_final[x][y] != 0 :
+                predict_img_final[x][y] = 1
+
+    return predict_img_final
+
+def threshold_labels(Zi, threshold):
+    return [1 if t >= threshold else 0 for t in Zi]
+
